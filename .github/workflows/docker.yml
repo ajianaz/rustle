@@ -2,7 +2,7 @@ name: Build & Push Docker Image
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     tags: ["v*"]
 
 env:
@@ -24,6 +24,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/metadata-action@v5
         id: meta
