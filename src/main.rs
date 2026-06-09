@@ -1,5 +1,4 @@
 use std::env;
-use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{self, AsyncWriteExt};
 
@@ -7,8 +6,8 @@ fn get_env(key: &str, default: &str) -> String {
     env::var(key).unwrap_or_else(|_| default.to_string())
 }
 
-async fn proxy_client(client: TcpStream, target_addr: SocketAddr) -> io::Result<()> {
-    let backend = TcpStream::connect(target_addr).await?;
+async fn proxy_client(client: TcpStream, target_addr: String) -> io::Result<()> {
+    let backend = TcpStream::connect(&target_addr).await?;
 
     let (mut cr, mut cw) = tokio::io::split(client);
     let (mut br, mut bw) = tokio::io::split(backend);
@@ -39,18 +38,20 @@ async fn main() -> io::Result<()> {
         .expect("LISTEN_PORT must be a valid port number");
 
     let target_addr = get_env("TARGET_ADDR", "127.0.0.1:8081");
-    let target: SocketAddr = target_addr
-        .parse()
-        .unwrap_or_else(|_| panic!("TARGET_ADDR must be valid host:port, got: {target_addr}"));
+
+    // Validate by resolving once at startup
+    tokio::net::TcpStream::connect(&target_addr)
+        .await
+        .unwrap_or_else(|_| panic!("TARGET_ADDR unreachable: {target_addr}"));
 
     let bind_addr = format!("0.0.0.0:{listen_port}");
     let listener = TcpListener::bind(&bind_addr).await?;
 
-    println!("rustle: listening on {bind_addr} -> {target}");
+    println!("rustle: listening on {bind_addr} -> {target_addr}");
 
     loop {
         let (client, client_addr) = listener.accept().await?;
-        let target = target;
+        let target = target_addr.clone();
 
         tokio::spawn(async move {
             match proxy_client(client, target).await {
