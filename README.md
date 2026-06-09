@@ -23,6 +23,8 @@ docker run -d \
   ghcr.io/ajianaz/rustle:latest
 ```
 
+> **Note:** GHCR image auto-builds on push to `main`. Tag `v*` triggers versioned builds.
+
 ### Docker Compose (Traefik → rustle → backend)
 
 ```yaml
