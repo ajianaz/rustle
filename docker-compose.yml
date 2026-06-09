@@ -1,0 +1,17 @@
+services:
+  rustle:
+    build: .
+    ports:
+      - "${LISTEN_PORT:-32145}:${LISTEN_PORT:-32145}"
+    environment:
+      - LISTEN_PORT=${LISTEN_PORT:-32145}
+      - TARGET_ADDR=${TARGET_ADDR:-backend:8080}
+    restart: unless-stopped
+    networks:
+      - proxy
+
+# Example: proxy mail traffic to Stalwart
+#   rustle:
+#     environment:
+#       - LISTEN_PORT=32145
+#       - TARGET_ADDR=stalwart:8080
